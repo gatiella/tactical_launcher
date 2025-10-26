@@ -35,7 +35,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     super.initState();
     _scrollController = ScrollController();
     _commandHandler = CommandHandler();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AppManagerService>().loadInstalledApps();
       _setupGestures();
@@ -110,13 +110,19 @@ class _TerminalScreenState extends State<TerminalScreen> {
   Future<void> _handleCommand(String command) async {
     final shellService = context.read<ShellService>();
     final appService = context.read<AppManagerService>();
-    
-    await _commandHandler.handleCommand(
+
+    final result = await _commandHandler.handleCommand(
       command,
       shellService,
       appService,
     );
-    
+
+    // Check if nano editor should be opened
+    if (result.output.startsWith('OPEN_EDITOR:')) {
+      final filename = result.output.replaceFirst('OPEN_EDITOR:', '');
+      await _commandHandler.openNanoEditor(context, filename);
+    }
+
     _scrollToBottom();
   }
 
@@ -135,48 +141,33 @@ class _TerminalScreenState extends State<TerminalScreen> {
       gestureService: gestureService,
       child: Scaffold(
         backgroundColor: TerminalTheme.black,
-        body: SafeArea(
-          top: false,
-          child: Container(
-            decoration: TerminalTheme.terminalDecoration.copyWith(
-              border: Border.all(
-                color: themeService.currentThemeColor,
-                width: 2,
+        // Add this to go truly edge-to-edge
+        extendBodyBehindAppBar: true,
+        body: Container(
+          decoration: TerminalTheme.terminalDecoration,
+          child: Column(
+            children: [
+              _buildHeader(themeService),
+
+              if (_showWidgets) ...[
+                const SystemMonitorWidget(),
+                QuickActionsWidget(onCommand: _handleCommand),
+                Divider(color: themeService.currentThemeColor),
+              ],
+
+              Expanded(
+                child: Consumer<ShellService>(
+                  builder: (context, shellService, child) {
+                    return TerminalWidget(
+                      history: shellService.history,
+                      scrollController: _scrollController,
+                    );
+                  },
+                ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: themeService.currentThemeColor.withOpacity(0.3),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                _buildHeader(themeService),
-                
-                if (_showWidgets) ...[
-                  const SystemMonitorWidget(),
-                  QuickActionsWidget(onCommand: _handleCommand),
-                  Divider(color: themeService.currentThemeColor),
-                ],
-                
-                Expanded(
-                  child: Consumer<ShellService>(
-                    builder: (context, shellService, child) {
-                      return TerminalWidget(
-                        history: shellService.history,
-                        scrollController: _scrollController,
-                      );
-                    },
-                  ),
-                ),
-                
-                TerminalInput(
-                  onCommand: _handleCommand,
-                ),
-              ],
-            ),
+
+              TerminalInput(onCommand: _handleCommand),
+            ],
           ),
         ),
         floatingActionButton: _buildGestureHelp(),
@@ -185,63 +176,79 @@ class _TerminalScreenState extends State<TerminalScreen> {
   }
 
   Widget _buildHeader(ThemeService themeService) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      decoration: BoxDecoration(
-        color: TerminalTheme.black,
-        border: Border(
-          bottom: BorderSide(
-            color: themeService.currentThemeColor,
-            width: 1,
+    return Consumer<ShellService>(
+      builder: (context, shellService, child) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            0, // Zero padding at top
+            16,
+            8,
           ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    'TACTICAL OS v2.1',
-                    style: TerminalTheme.promptText.copyWith(
-                      color: themeService.currentThemeColor,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const NetworkStatusWidget(),
-              ],
-            ),
-          ),
-          
-          Row(
+          decoration: BoxDecoration(color: TerminalTheme.black),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                icon: Icon(
-                  Icons.widgets,
-                  color: themeService.currentThemeColor,
-                ),
-                onPressed: _toggleWidgets,
-                iconSize: 20,
-                constraints: const BoxConstraints(),
-                padding: const EdgeInsets.all(8),
-                tooltip: 'Toggle Widgets',
+              // Status bar row
+              Row(
+                children: [
+                  // Left: Title
+                  Expanded(
+                    child: Text(
+                      'TACTICAL OS',
+                      style: TerminalTheme.promptText.copyWith(
+                        color: themeService.currentThemeColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+
+                  // Center: Network Status
+                  const NetworkStatusWidget(),
+
+                  const SizedBox(width: 16),
+
+                  // Right: Widgets toggle and Time
+                  IconButton(
+                    icon: Icon(
+                      Icons.widgets,
+                      color: themeService.currentThemeColor,
+                    ),
+                    onPressed: _toggleWidgets,
+                    iconSize: 20,
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(8),
+                    tooltip: 'Toggle Widgets',
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    TimeOfDay.now().format(context),
+                    style: TerminalTheme.terminalText.copyWith(
+                      color: themeService.currentThemeColor,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                TimeOfDay.now().format(context),
-                style: TerminalTheme.terminalText.copyWith(
-                  color: themeService.currentThemeColor,
-                  fontSize: 13,
+
+              const SizedBox(height: 4),
+
+              // Command prompt path
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'root@tactical:${shellService.displayPath}',
+                  style: TerminalTheme.terminalText.copyWith(
+                    fontSize: 11,
+                    color: themeService.currentThemeColor.withOpacity(0.7),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -260,17 +267,14 @@ class _TerminalScreenState extends State<TerminalScreen> {
 
   void _showGestureGuide() {
     final themeService = context.read<ThemeService>();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: TerminalTheme.black,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          side: BorderSide(
-            color: themeService.currentThemeColor,
-            width: 2,
-          ),
+          side: BorderSide(color: themeService.currentThemeColor, width: 2),
         ),
         title: Text(
           '⚡ GESTURE CONTROLS',

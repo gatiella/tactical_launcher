@@ -31,39 +31,45 @@ class TerminalWidget extends StatelessWidget {
 
     switch (line.type) {
       case LineType.input:
+        // Show the full command with prompt
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: Text(line.text, style: TerminalTheme.promptText),
+          padding: const EdgeInsets.only(top: 8, bottom: 2),
+          child: Text(
+            line.text,
+            style: TerminalTheme.terminalText.copyWith(
+              color: TerminalTheme.matrixGreen,
+            ),
+          ),
         );
       case LineType.error:
         style = TerminalTheme.errorText;
-        prefix = '✗ ';
+        prefix = '';
         break;
       case LineType.warning:
         style = TerminalTheme.warningText;
-        prefix = '⚠ ';
+        prefix = '';
         break;
       case LineType.success:
-        style = TerminalTheme.terminalText;
-        prefix = '✓ ';
+        style = TerminalTheme.terminalText.copyWith(
+          color: TerminalTheme.matrixGreen,
+        );
+        prefix = '';
         break;
       case LineType.info:
         style = TerminalTheme.terminalText.copyWith(
           color: TerminalTheme.cyberCyan,
         );
-        prefix = '▸ ';
+        prefix = '';
         break;
       case LineType.output:
-      style = TerminalTheme.terminalText;
+        style = TerminalTheme.terminalText;
+        prefix = '';
         break;
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Text(
-        '$prefix${line.text}',
-        style: style,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Text('$prefix${line.text}', style: style),
     );
   }
 }

@@ -30,17 +30,26 @@ class MkdirCommand extends BaseCommand {
     try {
       final dirName = args[0];
       final dir = Directory('${shellService.currentDirectory}/$dirName');
-      
+
       if (await dir.exists()) {
-        shellService.addOutput('Directory already exists: $dirName', type: LineType.warning);
+        shellService.addOutput(
+          'Directory already exists: $dirName',
+          type: LineType.warning,
+        );
         return CommandResult.error('Directory exists');
       }
 
       await dir.create(recursive: true);
-      shellService.addOutput('✓ Directory created: $dirName', type: LineType.success);
+      shellService.addOutput(
+        '✓ Directory created: $dirName',
+        type: LineType.success,
+      );
       return CommandResult.success('Directory created');
     } catch (e) {
-      shellService.addOutput('Error creating directory: $e', type: LineType.error);
+      shellService.addOutput(
+        'Error creating directory: $e',
+        type: LineType.error,
+      );
       return CommandResult.error(e.toString());
     }
   }
@@ -70,26 +79,40 @@ class RmCommand extends BaseCommand {
     try {
       final recursive = args.contains('-r');
       final target = args.firstWhere((arg) => arg != '-r');
-      final path = target.startsWith('/') ? target : '${shellService.currentDirectory}/$target';
+      final path = target.startsWith('/')
+          ? target
+          : '${shellService.currentDirectory}/$target';
 
       final file = File(path);
       final dir = Directory(path);
 
       if (await file.exists()) {
         await file.delete();
-        shellService.addOutput('✓ File deleted: $target', type: LineType.success);
+        shellService.addOutput(
+          '✓ File deleted: $target',
+          type: LineType.success,
+        );
         return CommandResult.success('File deleted');
       } else if (await dir.exists()) {
         if (recursive) {
           await dir.delete(recursive: true);
-          shellService.addOutput('✓ Directory deleted: $target', type: LineType.success);
+          shellService.addOutput(
+            '✓ Directory deleted: $target',
+            type: LineType.success,
+          );
           return CommandResult.success('Directory deleted');
         } else {
-          shellService.addOutput('Use -r flag to delete directories', type: LineType.error);
+          shellService.addOutput(
+            'Use -r flag to delete directories',
+            type: LineType.error,
+          );
           return CommandResult.error('Directory requires -r flag');
         }
       } else {
-        shellService.addOutput('File or directory not found: $target', type: LineType.error);
+        shellService.addOutput(
+          'File or directory not found: $target',
+          type: LineType.error,
+        );
         return CommandResult.error('Not found');
       }
     } catch (e) {
@@ -124,14 +147,20 @@ class CpCommand extends BaseCommand {
       final source = args[0];
       final dest = args[1];
       final sourceFile = File(source);
-      
+
       if (!await sourceFile.exists()) {
-        shellService.addOutput('Source file not found: $source', type: LineType.error);
+        shellService.addOutput(
+          'Source file not found: $source',
+          type: LineType.error,
+        );
         return CommandResult.error('Source not found');
       }
 
       await sourceFile.copy(dest);
-      shellService.addOutput('✓ File copied: $source → $dest', type: LineType.success);
+      shellService.addOutput(
+        '✓ File copied: $source → $dest',
+        type: LineType.success,
+      );
       return CommandResult.success('File copied');
     } catch (e) {
       shellService.addOutput('Error copying file: $e', type: LineType.error);
@@ -165,14 +194,20 @@ class MvCommand extends BaseCommand {
       final source = args[0];
       final dest = args[1];
       final sourceFile = File(source);
-      
+
       if (!await sourceFile.exists()) {
-        shellService.addOutput('Source file not found: $source', type: LineType.error);
+        shellService.addOutput(
+          'Source file not found: $source',
+          type: LineType.error,
+        );
         return CommandResult.error('Source not found');
       }
 
       await sourceFile.rename(dest);
-      shellService.addOutput('✓ File moved: $source → $dest', type: LineType.success);
+      shellService.addOutput(
+        '✓ File moved: $source → $dest',
+        type: LineType.success,
+      );
       return CommandResult.success('File moved');
     } catch (e) {
       shellService.addOutput('Error moving file: $e', type: LineType.error);
@@ -205,9 +240,12 @@ class TouchCommand extends BaseCommand {
     try {
       final filename = args[0];
       final file = File('${shellService.currentDirectory}/$filename');
-      
+
       await file.create();
-      shellService.addOutput('✓ File created: $filename', type: LineType.success);
+      shellService.addOutput(
+        '✓ File created: $filename',
+        type: LineType.success,
+      );
       return CommandResult.success('File created');
     } catch (e) {
       shellService.addOutput('Error creating file: $e', type: LineType.error);
@@ -238,15 +276,18 @@ class EchoCommand extends BaseCommand {
 
     try {
       final redirectIndex = args.indexOf('>');
-      
+
       if (redirectIndex != -1 && redirectIndex < args.length - 1) {
         // Redirect to file
         final text = args.sublist(0, redirectIndex).join(' ');
         final filename = args[redirectIndex + 1];
         final file = File('${shellService.currentDirectory}/$filename');
-        
+
         await file.writeAsString('$text\n');
-        shellService.addOutput('✓ Written to: $filename', type: LineType.success);
+        shellService.addOutput(
+          '✓ Written to: $filename',
+          type: LineType.success,
+        );
         return CommandResult.success('Written to file');
       } else {
         // Just output text
@@ -286,15 +327,18 @@ class GrepCommand extends BaseCommand {
       final pattern = args[0];
       final filename = args[1];
       final file = File(filename);
-      
+
       if (!await file.exists()) {
-        shellService.addOutput('File not found: $filename', type: LineType.error);
+        shellService.addOutput(
+          'File not found: $filename',
+          type: LineType.error,
+        );
         return CommandResult.error('File not found');
       }
 
       final lines = await file.readAsLines();
       final matches = lines.where((line) => line.contains(pattern)).toList();
-      
+
       if (matches.isEmpty) {
         shellService.addOutput('No matches found', type: LineType.warning);
         return CommandResult.success('No matches');
@@ -303,9 +347,12 @@ class GrepCommand extends BaseCommand {
       for (var match in matches) {
         shellService.addOutput(match);
       }
-      
+
       shellService.addOutput('', type: LineType.info);
-      shellService.addOutput('Found ${matches.length} matches', type: LineType.success);
+      shellService.addOutput(
+        'Found ${matches.length} matches',
+        type: LineType.success,
+      );
       return CommandResult.success('Found ${matches.length} matches');
     } catch (e) {
       shellService.addOutput('Error: $e', type: LineType.error);
@@ -338,22 +385,31 @@ class PingCommand extends BaseCommand {
     try {
       final host = args[0];
       shellService.addOutput('Pinging $host...');
-      
+
       final stopwatch = Stopwatch()..start();
-      final response = await http.get(Uri.parse('https://$host')).timeout(
-        const Duration(seconds: 5),
-      );
+      final response = await http
+          .get(Uri.parse('https://$host'))
+          .timeout(const Duration(seconds: 5));
       stopwatch.stop();
-      
+
       if (response.statusCode == 200) {
-        shellService.addOutput('✓ $host is reachable (${stopwatch.elapsedMilliseconds}ms)', type: LineType.success);
+        shellService.addOutput(
+          '✓ $host is reachable (${stopwatch.elapsedMilliseconds}ms)',
+          type: LineType.success,
+        );
         return CommandResult.success('Host reachable');
       } else {
-        shellService.addOutput('✗ $host returned status ${response.statusCode}', type: LineType.warning);
+        shellService.addOutput(
+          '✗ $host returned status ${response.statusCode}',
+          type: LineType.warning,
+        );
         return CommandResult.error('Unexpected status');
       }
     } catch (e) {
-      shellService.addOutput('✗ Unable to reach host: $e', type: LineType.error);
+      shellService.addOutput(
+        '✗ Unable to reach host: $e',
+        type: LineType.error,
+      );
       return CommandResult.error(e.toString());
     }
   }
@@ -383,19 +439,25 @@ class WgetCommand extends BaseCommand {
     try {
       final url = args[0];
       final filename = args.length > 1 ? args[1] : url.split('/').last;
-      
+
       shellService.addOutput('Downloading from $url...');
-      
+
       final response = await http.get(Uri.parse(url));
-      
+
       if (response.statusCode == 200) {
         final file = File('${shellService.currentDirectory}/$filename');
         await file.writeAsBytes(response.bodyBytes);
-        
-        shellService.addOutput('✓ Downloaded: $filename (${response.bodyBytes.length} bytes)', type: LineType.success);
+
+        shellService.addOutput(
+          '✓ Downloaded: $filename (${response.bodyBytes.length} bytes)',
+          type: LineType.success,
+        );
         return CommandResult.success('Download complete');
       } else {
-        shellService.addOutput('✗ Download failed: HTTP ${response.statusCode}', type: LineType.error);
+        shellService.addOutput(
+          '✗ Download failed: HTTP ${response.statusCode}',
+          type: LineType.error,
+        );
         return CommandResult.error('Download failed');
       }
     } catch (e) {
@@ -424,9 +486,9 @@ class PsCommand extends BaseCommand {
     try {
       shellService.addOutput('Running processes:', type: LineType.info);
       shellService.addOutput('═' * 50);
-      
+
       final result = await Process.run('ps', []);
-      
+
       if (result.exitCode == 0) {
         final lines = result.stdout.toString().split('\n');
         for (var line in lines) {
@@ -436,12 +498,21 @@ class PsCommand extends BaseCommand {
         }
         return CommandResult.success('Processes listed');
       } else {
-        shellService.addOutput('Unable to list processes', type: LineType.warning);
-        shellService.addOutput('Try: apps (to see installed apps)', type: LineType.info);
+        shellService.addOutput(
+          'Unable to list processes',
+          type: LineType.warning,
+        );
+        shellService.addOutput(
+          'Try: apps (to see installed apps)',
+          type: LineType.info,
+        );
         return CommandResult.error('Command not available');
       }
     } catch (e) {
-      shellService.addOutput('Process listing not available on this device', type: LineType.warning);
+      shellService.addOutput(
+        'Process listing not available on this device',
+        type: LineType.warning,
+      );
       return CommandResult.error(e.toString());
     }
   }
@@ -452,7 +523,7 @@ class NanoCommand extends BaseCommand {
   String get name => 'nano';
 
   @override
-  String get description => 'Simple text editor (opens settings)';
+  String get description => 'Open text editor';
 
   @override
   String get usage => 'nano <filename>';
@@ -464,16 +535,14 @@ class NanoCommand extends BaseCommand {
     AppManagerService appService,
   ) async {
     if (args.isEmpty) {
-      shellService.addOutput('Text editor feature coming soon!', type: LineType.info);
-      shellService.addOutput('For now, use: echo "text" > file.txt', type: LineType.info);
-      return CommandResult.success('Editor placeholder');
+      shellService.addOutput('Usage: nano <filename>', type: LineType.error);
+      return CommandResult.error('No filename specified');
     }
 
     final filename = args[0];
-    shellService.addOutput('Opening editor for: $filename', type: LineType.info);
-    shellService.addOutput('Note: Full editor not yet implemented', type: LineType.warning);
-    shellService.addOutput('Use "cat $filename" to view file', type: LineType.info);
-    
-    return CommandResult.success('Editor info shown');
+    shellService.addOutput('Opening editor: $filename', type: LineType.info);
+
+    // Return special result to trigger editor opening
+    return CommandResult.success('OPEN_EDITOR:$filename');
   }
 }

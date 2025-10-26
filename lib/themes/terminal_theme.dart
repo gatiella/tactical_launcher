@@ -50,32 +50,27 @@ class TerminalTheme {
     color: warningYellow,
   );
 
+  // REMOVED BORDERS - Clean look!
   static BoxDecoration terminalDecoration = BoxDecoration(
     color: black,
-    border: Border.all(color: matrixGreen, width: 2),
-    boxShadow: [
-      BoxShadow(
-        color: matrixGreen.withOpacity(0.3),
-        blurRadius: 20,
-        spreadRadius: 2,
-      ),
-    ],
+    // border and boxShadow removed
   );
+
   static Color getThemeColor(int themeIndex) {
-  const colors = [
-    matrixGreen,   // 0: Matrix Green
-    cyberCyan,     // 1: Cyber Cyan
-    alertRed,      // 2: Alert Red
-    warningYellow, // 3: Warning Yellow
-  ];
-  return colors[themeIndex % colors.length];
-}
+    const colors = [
+      matrixGreen, // 0: Matrix Green
+      cyberCyan, // 1: Cyber Cyan
+      alertRed, // 2: Alert Red
+      warningYellow, // 3: Warning Yellow
+    ];
+    return colors[themeIndex % colors.length];
+  }
 
-static TextStyle getTerminalTextWithColor(Color color) {
-  return terminalText.copyWith(color: color);
-}
+  static TextStyle getTerminalTextWithColor(Color color) {
+    return terminalText.copyWith(color: color);
+  }
 
-static TextStyle getPromptTextWithColor(Color color) {
-  return promptText.copyWith(color: color);
-}
+  static TextStyle getPromptTextWithColor(Color color) {
+    return promptText.copyWith(color: color);
+  }
 }

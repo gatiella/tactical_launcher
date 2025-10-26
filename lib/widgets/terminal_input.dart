@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show KeyDownEvent;
+import 'package:provider/provider.dart';
 import '../themes/terminal_theme.dart';
+import '../services/shell_service.dart';
 
 class TerminalInput extends StatefulWidget {
   final Function(String) onCommand;
 
-  const TerminalInput({
-    super.key,
-    required this.onCommand,
-  });
+  const TerminalInput({super.key, required this.onCommand});
 
   @override
   State<TerminalInput> createState() => _TerminalInputState();
@@ -23,7 +22,6 @@ class _TerminalInputState extends State<TerminalInput> {
   @override
   void initState() {
     super.initState();
-    // Auto-focus input on startup
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
@@ -48,7 +46,7 @@ class _TerminalInputState extends State<TerminalInput> {
 
   void _handleArrowUp() {
     if (_commandHistory.isEmpty) return;
-    
+
     if (_historyIndex < _commandHistory.length - 1) {
       _historyIndex++;
       _controller.text = _commandHistory[_historyIndex];
@@ -73,18 +71,18 @@ class _TerminalInputState extends State<TerminalInput> {
 
   @override
   Widget build(BuildContext context) {
+    final shellService = context.watch<ShellService>();
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: TerminalTheme.darkGray,
-        border: Border(
-          top: BorderSide(color: TerminalTheme.matrixGreen, width: 1),
-        ),
+        // border removed
       ),
       child: Row(
         children: [
           Text(
-            'root@tactical:~\$ ',
+            '${shellService.displayPath} \$ ',
             style: TerminalTheme.promptText,
           ),
           Expanded(
